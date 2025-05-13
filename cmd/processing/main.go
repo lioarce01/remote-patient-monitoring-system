@@ -27,50 +27,56 @@ func main() {
 	influxDB := os.Getenv("INFLUX_DB")
 	influxUser := os.Getenv("INFLUX_USER")
 	influxPass := os.Getenv("INFLUX_PASS")
+	groupID := os.Getenv("GROUP_ID")
 
-	// ---  KAFKA CONSUMER ---
-	// Create a Kafka consumer to consume messages from the specified topic
-	consumer := kafka.NewKafkaConsumer(brokers, obsTopic, "processor-group")
+	// --- Inicializar consumidor de Kafka ---
+	consumer := kafka.NewKafkaConsumer(brokers, obsTopic, groupID)
 
+	// --- Inicializar repositorios ---
 	metricRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
-		log.Fatalf("InfluxDB repo error: %v", err)
+		log.Fatalf("Error al inicializar InfluxDB: %v", err)
 	}
 
 	alertRepo, err := postgres.NewPostgresRepo(conn)
 	if err != nil {
-		log.Fatalf("Postgres repo error: %v", err)
+		log.Fatalf("Error al inicializar Postgres: %v", err)
 	}
 
+	// --- Inicializar publisher ---
 	publisher := kafka.NewKafkaPublisher(brokers, alertTopic)
 
-	// --- processing service ---
+	// --- Inicializar servicio de procesamiento ---
 	svc := process.NewProcessService(publisher, alertRepo, metricRepo)
 
-	// --- cancel context on shutdown ---
-	// Create a context that will be cancelled on SIGINT or SIGTERM
+	// --- Configurar contexto para manejo de señales ---
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	// --- start consuming messages ---
-	// Start the Kafka consumer in a separate goroutine
+	// --- Iniciar consumo de mensajes ---
 	go func() {
 		consumer.Consume(ctx, func(key, msg []byte) {
 			var obs model.Observation
 			if err := json.Unmarshal(msg, &obs); err != nil {
-				log.Printf("Invalid observation message: %v", err)
+				log.Printf("Mensaje de observación inválido: %v", err)
 				return
 			}
-			if err := svc.HandleObservation(ctx, &obs); err != nil {
-				log.Printf("Error processing observation %s: %v", obs.ID, err)
+
+			record, err := model.ToObservationRecord(&obs)
+			if err != nil {
+				log.Printf("Error al convertir a ObservationRecord: %v", err)
+				return
+			}
+
+			if err := svc.HandleObservation(ctx, record); err != nil {
+				log.Printf("Error al procesar observación %s: %v", obs.ID, err)
 			}
 		})
 	}()
 
-	// wait for shutdown signal
+	// --- Esperar señal de terminación ---
 	<-ctx.Done()
-	// shutdown signal received
-	log.Println("Shutdown signal received, waiting for in-flight messages...")
+	log.Println("Señal de terminación recibida, esperando finalización de procesos...")
 	time.Sleep(2 * time.Second)
-	log.Println("Processing service stopped")
+	log.Println("Servicio de procesamiento detenido")
 }

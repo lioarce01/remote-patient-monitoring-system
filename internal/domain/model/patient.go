@@ -3,8 +3,7 @@ package model
 import "time"
 
 type Patient struct {
-	ID        string
+	ID        string `gorm:"primaryKey"`
 	Name      string
 	BirthDate time.Time
-	// Other..
 }

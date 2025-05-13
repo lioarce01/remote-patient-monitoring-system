@@ -1,0 +1,44 @@
+package http
+
+import (
+	"net/http"
+
+	"remote-patient-monitoring-system/internal/application/query"
+
+	"github.com/gin-gonic/gin"
+)
+
+type QueryHandler struct {
+	Service *query.QueryService
+}
+
+func NewQueryHandler(svc *query.QueryService) *QueryHandler {
+	return &QueryHandler{Service: svc}
+}
+
+func (h *QueryHandler) RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/patients/:id/observations", h.getObservations)
+	r.GET("/patients/:id/alerts", h.getAlerts)
+}
+
+func (h *QueryHandler) getObservations(c *gin.Context) {
+	id := c.Param("id")
+	from := c.Query("from")
+	to := c.Query("to")
+	data, err := h.Service.GetPatientObservations(c.Request.Context(), id, from, to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+func (h *QueryHandler) getAlerts(c *gin.Context) {
+	id := c.Param("id")
+	data, err := h.Service.GetPatientAlerts(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}

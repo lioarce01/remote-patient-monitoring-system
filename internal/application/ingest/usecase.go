@@ -3,7 +3,10 @@ package ingest
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"remote-patient-monitoring-system/internal/domain"
+	"remote-patient-monitoring-system/internal/domain/model"
 	"time"
 )
 
@@ -14,7 +17,6 @@ type TelemetryInput struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// IngestService orquesta validación, normalización y persistencia.
 type IngestService struct {
 	Publisher       domain.Publisher
 	ObservationRepo domain.ObservationRepository
@@ -23,6 +25,10 @@ type IngestService struct {
 }
 
 func NewIngestService(pub domain.Publisher, obsRepo domain.ObservationRepository) *IngestService {
+	if pub == nil || obsRepo == nil {
+		log.Fatal("Publisher or ObservationRepo is nil")
+	}
+
 	return &IngestService{
 		Publisher:       pub,
 		ObservationRepo: obsRepo,
@@ -31,13 +37,48 @@ func NewIngestService(pub domain.Publisher, obsRepo domain.ObservationRepository
 	}
 }
 
-func (svc *IngestService) Execute(ctx context.Context, input TelemetryInput) error {
+func (svc *IngestService) Execute(ctx context.Context, input TelemetryInput) (err error) {
+	// 1) Capturar cualquier panic interno
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic in IngestService.Execute: %v", r)
+		}
+	}()
+
+	// 2) Log de entrada
+	log.Printf("[Ingest] Execute called – input: %+v", input)
+
+	// 3) Normalizar
 	obs := svc.normalizer.FromTelemetry(input)
-	if err := svc.validator.Validate(obs); err != nil {
-		return errors.New("invalid observation: " + err.Error())
+	log.Printf("[Ingest] Normalized obs: %+v", obs)
+	if obs == nil {
+		return errors.New("observation is nil after normalization")
 	}
-	if err := svc.Publisher.PublishObservation(ctx, obs); err != nil {
-		return err
+
+	// 4) Asignar un ID único
+	obs.ID = fmt.Sprintf("obs-%d", time.Now().UnixNano())
+	log.Printf("[Ingest] Assigned ID: %s", obs.ID)
+
+	// 5) Convertir a record plano
+	record, err := model.ToObservationRecord(obs)
+	log.Printf("[Ingest] ToObservationRecord returned: %+v, err: %v", record, err)
+	if err != nil {
+		return fmt.Errorf("conversion error: %w", err)
 	}
-	return svc.ObservationRepo.Save(ctx, obs)
+
+	// 6) Publicar en Kafka
+	log.Printf("[Ingest] Publishing observation record for patient %s", record.PatientID)
+	if err := svc.Publisher.PublishObservation(ctx, record); err != nil {
+		return fmt.Errorf("publish error: %w", err)
+	}
+	log.Printf("[Ingest] Published successfully")
+
+	// 7) Guardar en InfluxDB
+	log.Printf("[Ingest] Saving observation record to repository")
+	if err := svc.ObservationRepo.Save(ctx, record); err != nil {
+		return fmt.Errorf("save error: %w", err)
+	}
+	log.Printf("[Ingest] Saved successfully")
+
+	return nil
 }

@@ -2,46 +2,37 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"remote-patient-monitoring-system/internal/domain/model"
 
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type PostgresRepo struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
 func NewPostgresRepo(conn string) (*PostgresRepo, error) {
-	db, err := sql.Open("postgres", conn)
-	return &PostgresRepo{db: db}, err
-}
-
-func (r *PostgresRepo) Save(ctx context.Context, alert *model.Alert) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO alerts(id,patient_id,observation_id,message,type,timestamp,acknowledged)
-		 VALUES($1,$2,$3,$4,$5,$6,$7)`,
-		alert.ID, alert.PatientID, alert.ObservationID,
-		alert.Message, alert.Type, alert.Timestamp, alert.Acknowledged)
-	return err
-}
-
-func (r *PostgresRepo) FetchByPatient(ctx context.Context, patientID string) ([]model.Alert, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT id,observation_id,message,type,timestamp,acknowledged
-		 FROM alerts WHERE patient_id=$1`, patientID)
+	db, err := gorm.Open(postgres.Open(conn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var list []model.Alert
-	for rows.Next() {
-		var a model.Alert
-		if err := rows.Scan(&a.ID, &a.ObservationID, &a.Message, &a.Type, &a.Timestamp, &a.Acknowledged); err != nil {
-			continue
-		}
-		a.PatientID = patientID
-		list = append(list, a)
+
+	// Auto-migrar el esquema
+	if err := db.AutoMigrate(&model.Alert{}); err != nil {
+		return nil, err
 	}
-	return list, nil
+
+	return &PostgresRepo{db: db}, nil
+}
+
+func (r *PostgresRepo) Save(ctx context.Context, alert *model.Alert) error {
+	return r.db.WithContext(ctx).Create(alert).Error
+}
+
+func (r *PostgresRepo) FetchByPatient(ctx context.Context, patientID string) ([]model.Alert, error) {
+	var alerts []model.Alert
+	err := r.db.WithContext(ctx).Where("patient_id = ?", patientID).Find(&alerts).Error
+	return alerts, err
 }

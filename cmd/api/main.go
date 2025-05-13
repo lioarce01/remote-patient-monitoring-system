@@ -11,6 +11,7 @@ import (
 
 	"remote-patient-monitoring-system/internal/application/query"
 	"remote-patient-monitoring-system/internal/domain/model"
+	httpHandlers "remote-patient-monitoring-system/internal/infrastructure/http"
 	"remote-patient-monitoring-system/internal/infrastructure/influxdb"
 	"remote-patient-monitoring-system/internal/infrastructure/kafka"
 	"remote-patient-monitoring-system/internal/infrastructure/postgres"
@@ -28,88 +29,68 @@ func main() {
 	influxUser := os.Getenv("INFLUX_USER")
 	influxPass := os.Getenv("INFLUX_PASS")
 	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
-	alertTopic := os.Getenv("ALERTS_TOPIC")
+	alertTopic := os.Getenv("ALERT_TOPIC")
 	apiPort := os.Getenv("API_PORT")
+	groupID := os.Getenv("GROUP_ID")
 
-	// --- Initialize repos ---
-	// Initialize the InfluxDB repository
+	// --- Inicializar repositorios ---
 	metricRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
-		log.Fatal("InfluxDB repo error:", err)
+		log.Fatal("Error al inicializar InfluxDB:", err)
 	}
 
-	// Initialize the PostgreSQL repository
 	alertRepo, err := postgres.NewPostgresRepo(conn)
 	if err != nil {
-		log.Fatal("Postgres repo error:", err)
+		log.Fatal("Error al inicializar Postgres:", err)
 	}
 
-	// Initialize the Kafka producer
-	svc := query.NewQueryService(metricRepo, alertRepo)
+	// --- Inicializar servicios ---
+	querySvc := query.NewQueryService(metricRepo, alertRepo)
 
-	// --- WebSocket hub ---
+	// --- Inicializar handlers ---
+	queryHandler := httpHandlers.NewQueryHandler(querySvc)
+
+	// --- Configurar WebSocket ---
 	var (
 		upgrader  = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 		clients   = make(map[*websocket.Conn]bool)
 		clientsMu sync.Mutex
 	)
 
-	// Broadcasts an alert to all connected clients.
 	broadcastAlert := func(alert *model.Alert) {
 		clientsMu.Lock()
 		defer clientsMu.Unlock()
 		for conn := range clients {
 			if err := conn.WriteJSON(alert); err != nil {
-				log.Println("WS: write error:", err)
-				clientsMu.Lock()
-				delete(clients, conn)
-				clientsMu.Unlock()
+				log.Println("Error al enviar alerta por WebSocket:", err)
 				conn.Close()
+				delete(clients, conn)
 			}
 		}
 	}
 
-	// --- sub alerts topic ---
+	// --- Suscribirse al tópico de alertas ---
 	go func() {
-		consumer := kafka.NewKafkaConsumer(brokers, alertTopic, "api-alerts-group")
+		consumer := kafka.NewKafkaConsumer(brokers, alertTopic, groupID)
 		consumer.Consume(context.Background(), func(key, value []byte) {
 			var alert model.Alert
 			if err := json.Unmarshal(value, &alert); err != nil {
-				log.Println("WS: invalid alert msg:", err)
+				log.Println("Mensaje de alerta inválido:", err)
 				return
 			}
 			broadcastAlert(&alert)
 		})
 	}()
 
-	// --- Router Gin ---
+	// --- Configurar router ---
 	router := gin.Default()
-
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	// Registrar rutas de handlers
 	api := router.Group("/")
-	api.GET("/patients/:id/observations", func(c *gin.Context) {
-		id := c.Param("id")
-		from := c.Query("from")
-		to := c.Query("to")
-		data, err := svc.GetPatientObservations(c.Request.Context(), id, from, to)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, data)
-	})
-	api.GET("/patients/:id/alerts", func(c *gin.Context) {
-		id := c.Param("id")
-		data, err := svc.GetPatientAlerts(c.Request.Context(), id)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, data)
-	})
+	queryHandler.RegisterRoutes(api)
 
-	// Endpoint WebSocket to receive alerts in real time
+	// Endpoint WebSocket para recibir alertas en tiempo real
 	router.GET("/ws/alerts", func(c *gin.Context) {
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -118,14 +99,14 @@ func main() {
 		clientsMu.Lock()
 		clients[ws] = true
 		clientsMu.Unlock()
-		// Optional: manage client disconnection
-		// This will close the connection when the client disconnects
+
 		defer func() {
 			clientsMu.Lock()
 			delete(clients, ws)
 			clientsMu.Unlock()
 			ws.Close()
 		}()
+
 		for {
 			if _, _, err := ws.NextReader(); err != nil {
 				break
@@ -134,7 +115,7 @@ func main() {
 	})
 
 	// --- Iniciar servidor ---
-	log.Printf("API service listening on :%s\n", apiPort)
+	log.Printf("API service listening on en :%s\n", apiPort)
 	if err := router.Run(":" + apiPort); err != nil {
 		log.Fatal(err)
 	}

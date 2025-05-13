@@ -6,7 +6,7 @@ import (
 )
 
 type ObservationRepository interface {
-	Save(ctx context.Context, obs *model.Observation) error
+	Save(ctx context.Context, record *model.ObservationRecord) error
 	FetchObservations(ctx context.Context, patientID, from, to string) ([]model.Observation, error)
 }
 
@@ -16,6 +16,6 @@ type AlertRepository interface {
 }
 
 type Publisher interface {
-	PublishObservation(ctx context.Context, obs *model.Observation) error
+	PublishObservation(ctx context.Context, obs *model.ObservationRecord) error
 	PublishAlert(ctx context.Context, alert *model.Alert) error
 }
