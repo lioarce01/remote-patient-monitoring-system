@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -64,6 +65,8 @@ func ToObservationRecord(obs *Observation) (*ObservationRecord, error) {
 		Value:             obs.ValueQuantity.Value,
 		Unit:              obs.ValueQuantity.Unit,
 	}
+
+	log.Printf("[ToObservationRecord] Value: %f", record.Value)
 
 	return record, nil
 }

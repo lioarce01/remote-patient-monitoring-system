@@ -3,6 +3,7 @@ package influxdb
 import (
 	"context"
 	"fmt"
+	"log"
 	"remote-patient-monitoring-system/internal/domain"
 	"remote-patient-monitoring-system/internal/domain/model"
 	"time"
@@ -50,6 +51,8 @@ func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) 
 	)
 
 	bp.AddPoint(pt)
+
+	log.Printf("[InfluxRepo] Saving value: %f", record.Value)
 
 	// Escribir el punto en InfluxDB
 	return r.client.Write(bp)

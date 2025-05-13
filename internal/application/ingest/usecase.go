@@ -13,7 +13,9 @@ import (
 // TelemetryInput representa datos sin procesar.
 type TelemetryInput struct {
 	PatientID string    `json:"patient_id"`
-	HeartRate float64   `json:"heart_rate"`
+	Type      string    `json:"type"`  // ej: "heart_rate"
+	Value     float64   `json:"value"` // ej: 78.0
+	Unit      string    `json:"unit"`  // ej: "bpm"
 	Timestamp time.Time `json:"timestamp"`
 }
 
@@ -50,7 +52,7 @@ func (svc *IngestService) Execute(ctx context.Context, input TelemetryInput) (er
 
 	// 3) Normalizar
 	obs := svc.normalizer.FromTelemetry(input)
-	log.Printf("[Ingest] Normalized obs: %+v", obs)
+	log.Printf("[Ingest] Normalized obs: %+v", obs) // Verificar el valor aquí
 	if obs == nil {
 		return errors.New("observation is nil after normalization")
 	}
