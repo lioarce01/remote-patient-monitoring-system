@@ -22,13 +22,14 @@ type TelemetryInput struct {
 type IngestService struct {
 	Publisher       domain.Publisher
 	ObservationRepo domain.ObservationRepository
+	AlertRepo       domain.AlertRepository
 	validator       *Validator
 	normalizer      *Normalizer
 }
 
 func NewIngestService(pub domain.Publisher, obsRepo domain.ObservationRepository) *IngestService {
 	if pub == nil || obsRepo == nil {
-		log.Fatal("Publisher or ObservationRepo is nil")
+		log.Fatal("Publisher, ObservationRepo or AlertRepo is nil")
 	}
 
 	return &IngestService{
