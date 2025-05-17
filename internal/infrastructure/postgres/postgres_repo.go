@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"log"
 	"remote-patient-monitoring-system/internal/domain/model"
 
 	_ "github.com/lib/pq"
@@ -28,7 +29,14 @@ func NewPostgresRepo(conn string) (*PostgresRepo, error) {
 }
 
 func (r *PostgresRepo) Save(ctx context.Context, alert *model.Alert) error {
-	return r.db.WithContext(ctx).Create(alert).Error
+	log.Printf("[PostgresRepo] Intentando guardar alerta: %+v", alert)
+	err := r.db.WithContext(ctx).Create(alert).Error
+	if err != nil {
+		log.Printf("[PostgresRepo] Error al guardar alerta: %v", err)
+	} else {
+		log.Printf("[PostgresRepo] Alerta guardada con éxito: %s", alert.ID)
+	}
+	return err
 }
 
 func (r *PostgresRepo) FetchByPatient(ctx context.Context, patientID string) ([]model.Alert, error) {

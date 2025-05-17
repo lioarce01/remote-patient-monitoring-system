@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -69,12 +70,27 @@ func (svc *IngestService) Execute(ctx context.Context, input TelemetryInput) (er
 		return fmt.Errorf("conversion error: %w", err)
 	}
 
-	// 6) Publicar en Kafka
-	log.Printf("[Ingest] Publishing observation record for patient %s", record.PatientID)
-	if err := svc.Publisher.PublishObservation(ctx, record); err != nil {
-		return fmt.Errorf("publish error: %w", err)
+	obsFHIR := model.Observation{
+		ID:                record.ID,
+		ResourceType:      record.ResourceType,
+		Status:            record.Status,
+		Code:              model.Code{Text: record.CodeText},
+		Subject:           model.Subject{Reference: record.PatientID},
+		EffectiveDateTime: record.EffectiveDateTime.Format(time.RFC3339),
+		ValueQuantity:     model.ValueQuantity{Value: record.Value, Unit: record.Unit},
 	}
-	log.Printf("[Ingest] Published successfully")
+
+	// Serializa y publica el FHIR Observation
+	payload, err := json.Marshal(obsFHIR)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Observation: %w", err)
+	}
+
+	// 6) Publicar en Kafka
+	if err := svc.Publisher.PublishFHIR(ctx, payload); err != nil {
+		return fmt.Errorf("publish FHIR error: %w", err)
+	}
+	log.Println("[Ingest] Published FHIR Observation successfully")
 
 	// 7) Guardar en InfluxDB
 	log.Printf("[Ingest] Saving observation record to repository")

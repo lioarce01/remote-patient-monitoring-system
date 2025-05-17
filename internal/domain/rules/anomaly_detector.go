@@ -10,13 +10,15 @@ type ZScoreDetector struct {
 	maxSize   int
 	mu        sync.Mutex
 	Threshold float64
+	MinStdDev float64
 }
 
-func NewZScoreDetector(windowSize int, threshold float64) *ZScoreDetector {
+func NewZScoreDetector(windowSize int, threshold float64, minStdDev float64) *ZScoreDetector {
 	return &ZScoreDetector{
 		window:    make([]float64, 0, windowSize),
 		maxSize:   windowSize,
 		Threshold: threshold,
+		MinStdDev: minStdDev,
 	}
 }
 
@@ -44,8 +46,8 @@ func (z *ZScoreDetector) Add(value float64) bool {
 	mean := sum / n
 	variance := (sqSum / n) - (mean * mean)
 	stdev := math.Sqrt(variance)
-	if stdev == 0 {
-		return false
+	if stdev < z.MinStdDev {
+		stdev = z.MinStdDev
 	}
 
 	zScore := math.Abs(value-mean) / stdev

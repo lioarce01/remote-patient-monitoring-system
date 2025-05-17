@@ -9,7 +9,10 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-type KafkaPublisher struct{ w *kafka.Writer }
+type KafkaPublisher struct {
+	w     *kafka.Writer
+	topic string
+}
 
 func NewKafkaPublisher(brokers []string, topic string) *KafkaPublisher {
 	if len(brokers) == 0 || topic == "" {
@@ -19,7 +22,7 @@ func NewKafkaPublisher(brokers []string, topic string) *KafkaPublisher {
 		Brokers: brokers,
 		Topic:   topic,
 	})
-	return &KafkaPublisher{w: w}
+	return &KafkaPublisher{w: w, topic: topic}
 }
 
 func (p *KafkaPublisher) PublishObservation(ctx context.Context, obs *model.ObservationRecord) error {
@@ -30,4 +33,11 @@ func (p *KafkaPublisher) PublishObservation(ctx context.Context, obs *model.Obse
 func (p *KafkaPublisher) PublishAlert(ctx context.Context, alert *model.Alert) error {
 	msg, _ := json.Marshal(alert)
 	return p.w.WriteMessages(ctx, kafka.Message{Key: []byte(alert.PatientID), Value: msg})
+}
+
+func (p *KafkaPublisher) PublishFHIR(ctx context.Context, payload []byte) error {
+	return p.w.WriteMessages(ctx, kafka.Message{
+		Key:   nil,
+		Value: payload,
+	})
 }
