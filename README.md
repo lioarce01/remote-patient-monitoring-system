@@ -57,12 +57,6 @@ This project implements a scalable RPM system that captures patient vital signs 
 * **Monitoring**: Prometheus
 * **Deployment**: Docker & Docker Compose
 
-## Prerequisites
-
-* Docker & Docker Compose installed
-* Minimum 4 GB RAM available for containers
-* (Optional) `make` for convenience commands
-
 ## Getting Started
 
 ### Clone the Repository
