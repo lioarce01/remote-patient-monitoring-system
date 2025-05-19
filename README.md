@@ -9,7 +9,6 @@ A real-time Remote Patient Monitoring (RPM) system designed to collect, process,
 * [Introduction](#introduction)
 * [Architecture](#architecture)
 * [Tech Stack](#tech-stack)
-* [Prerequisites](#prerequisites)
 * [Getting Started](#getting-started)
 
   * [Clone the Repository](#clone-the-repository)
@@ -200,11 +199,13 @@ Messages will be sent in JSON format:
 
 ```json
 {
-  "alert_id": "uuid",
-  "patient_id": "123",
-  "timestamp": "RFC3339",
-  "type": "HighHeartRate",
-  "value": 120
+  "ID": "alert-1747693382984800835",
+  "PatientID": "Patient/Patient123",
+  "ObservationID": "obs-1747693381973770098",
+  "Message": "Anomaly detected: value=127.00 at 2025-05-19 22:30:00 +0000 UTC",
+  "Type": "Anomaly",
+  "Timestamp": "2025-05-19T22:23:02.984849133Z",
+  "Acknowledged": false
 }
 ```
 
