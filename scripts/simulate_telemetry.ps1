@@ -7,9 +7,18 @@ $Unit = "bpm"
 # Obtener hora UTC como base
 $baseTime = (Get-Date).ToUniversalTime()
 
-Write-Host "⏱️ Enviando telemetrías normales..."
-for ($i = 0; $i -lt 5; $i++) {
-    $value = Get-Random -Minimum 77 -Maximum 80  # valores entre 77 y 79
+Write-Host "Enviando telemetrias..."
+
+for ($i = 0; $i -lt 30; $i++) {
+    # Generar valores normales en rango típico 60-100 bpm, con algunas anómalas
+    if ($i -eq 10 -or $i -eq 25) {
+        # Anomalías: valores fuera del rango normal
+        $value = Get-Random -Minimum 110 -Maximum 130
+    } else {
+        # Valores normales
+        $value = Get-Random -Minimum 65 -Maximum 85
+    }
+
     $timestamp = $baseTime.AddMinutes($i).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
     $payload = @{
@@ -20,23 +29,10 @@ for ($i = 0; $i -lt 5; $i++) {
         timestamp  = $timestamp
     } | ConvertTo-Json -Depth 3
 
-    Write-Host "→ Normal: $value bpm @ $timestamp"
+    Write-Host "Telemetria: $value bpm @ $timestamp"
 
     Invoke-RestMethod -Uri $Url -Method Post -Body $payload -ContentType "application/json"
     Start-Sleep -Seconds 1
 }
 
-Write-Host "🚨 Enviando telemetría anómala..."
-$anomalyValue = 95
-$anomalyTimestamp = $baseTime.AddMinutes(5).ToString("yyyy-MM-ddTHH:mm:ssZ")
-
-$anomalyPayload = @{
-    patient_id = $PatientId
-    type       = $Type
-    value      = $anomalyValue
-    unit       = $Unit
-    timestamp  = $anomalyTimestamp
-} | ConvertTo-Json -Depth 3
-
-Invoke-RestMethod -Uri $Url -Method Post -Body $anomalyPayload -ContentType "application/json"
-Write-Host "✅ Telemetrías enviadas. Verifica los logs o la base de datos para ver si se disparó una alerta."
+Write-Host "Telemetrias enviadas. Revisa los logs para ver las alertas."

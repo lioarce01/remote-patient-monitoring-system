@@ -27,7 +27,7 @@ func NewProcessService(publisher domain.Publisher, alertRepo domain.AlertReposit
 		AlertPublisher: publisher,
 		AlertRepo:      alertRepo,
 		MetricsRepo:    metricsRepo,
-		ZDetector:      rules.NewZScoreDetector(5, 1.2, 0.5),
+		ZDetector:      rules.NewZScoreDetector(30, 3.0, 0.1),
 		Thresholds:     &rules.Thresholds{HeartRateMax: 100, SpO2Min: 90},
 	}
 }
