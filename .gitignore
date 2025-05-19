@@ -28,9 +28,6 @@ vendor/
 *.swp
 *.swo
 
-# Dependencias de módulos (opcional, si usas Go modules no es necesario ignorar)
-go.sum
-
 # Archivos de cobertura de tests
 coverage.out
 
