@@ -58,4 +58,4 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t myorg/rpm-services:latest .
+          docker build -t myorg/ingest-service:latest .
