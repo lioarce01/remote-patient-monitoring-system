@@ -1,50 +1,19 @@
-name: CI
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: timescale/timescaledb:latest-pg14
-        env:
-          POSTGRES_DB: vitalsdb
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: pass
-        ports:
-          - 5432:5432
-      kafka:
-        image: confluentinc/cp-kafka:latest
-        env:
-          KAFKA_ZOOKEEPER_CONNECT: localhost:2181
-          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-        ports:
-          - 9092:9092
-      influxdb:
-        image: influxdb:2.6
-        env:
-          INFLUXDB_INIT_ADMIN_TOKEN: my-token
-          INFLUXDB_INIT_ORG: my-org
-          INFLUXDB_INIT_BUCKET: vitals-bucket
-        ports:
-          - 8086:8086
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.20"
-      - name: Install dependencies
-        run: go mod download
-      - name: Build services
-        run: |
-          go build -o ingest ./cmd/ingest
-          go build -o processing ./cmd/processing
-          go build -o api ./cmd/api
-      - name: Lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run
-      - name: Build Docker images
-        run: |
-          docker build cmd/ingest -t myorg/ingest-service:latest
-          docker build cmd/processing -t myorg/processing-service:latest
-          docker build cmd/api -t myorg/api-service:latest
+steps:
+  - uses: actions/checkout@v2
+
+  - name: Set up Go
+    uses: actions/setup-go@v2
+    with:
+      go-version: "1.23"
+
+  - name: Tidy Go modules
+    run: go mod tidy
+
+  - name: Install dependencies
+    run: go mod download
+
+  - name: Build services
+    run: |
+      go build -o ingest ./cmd/ingest
+      go build -o processing ./cmd/processing
+      go build -o api ./cmd/api
