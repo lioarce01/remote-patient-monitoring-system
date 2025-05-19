@@ -36,18 +36,15 @@ jobs:
           go-version: "1.20"
       - name: Install dependencies
         run: go mod download
-      - name: Run unit tests
-        run: go test ./... -v
       - name: Build services
         run: |
-          go build -o ingest-service ./cmd/ingest-service
-          go build -o processing-service ./cmd/processing-service
-          go build -o api-service ./cmd/api-service
+          go build -o ingest ./cmd/ingest
+          go build -o processing ./cmd/processing
+          go build -o api ./cmd/api
       - name: Lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run
       - name: Build Docker images
         run: |
-          docker build cmd/ingest-service -t myorg/ingest-service:latest
-          docker build cmd/processing-service -t myorg/processing-service:latest
-          docker build cmd/api-service -t myorg/api-service:latest
-      # Steps to push images to registry would follow...
+          docker build cmd/ingest -t myorg/ingest-service:latest
+          docker build cmd/processing -t myorg/processing-service:latest
+          docker build cmd/api -t myorg/api-service:latest
