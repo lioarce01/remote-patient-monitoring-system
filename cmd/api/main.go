@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"remote-patient-monitoring-system/internal/application/query"
 	"remote-patient-monitoring-system/internal/domain/model"
@@ -15,9 +13,9 @@ import (
 	"remote-patient-monitoring-system/internal/infrastructure/influxdb"
 	"remote-patient-monitoring-system/internal/infrastructure/kafka"
 	"remote-patient-monitoring-system/internal/infrastructure/postgres"
+	"remote-patient-monitoring-system/internal/infrastructure/ws"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -50,24 +48,8 @@ func main() {
 	// --- Inicializar handlers ---
 	queryHandler := httpHandlers.NewQueryHandler(querySvc)
 
-	// --- Configurar WebSocket ---
-	var (
-		upgrader  = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
-		clients   = make(map[*websocket.Conn]bool)
-		clientsMu sync.Mutex
-	)
-
-	broadcastAlert := func(alert *model.Alert) {
-		clientsMu.Lock()
-		defer clientsMu.Unlock()
-		for conn := range clients {
-			if err := conn.WriteJSON(alert); err != nil {
-				log.Println("Error al enviar alerta por WebSocket:", err)
-				conn.Close()
-				delete(clients, conn)
-			}
-		}
-	}
+	// --- Inicializar WebSocket ---
+	wsHandler := ws.NewWSHandler()
 
 	// --- Suscribirse al tópico de alertas ---
 	go func() {
@@ -78,7 +60,7 @@ func main() {
 				log.Println("Mensaje de alerta inválido:", err)
 				return
 			}
-			broadcastAlert(&alert)
+			wsHandler.BroadcastAlert(&alert)
 		})
 	}()
 
@@ -91,28 +73,7 @@ func main() {
 	queryHandler.RegisterRoutes(api)
 
 	// Endpoint WebSocket para recibir alertas en tiempo real
-	router.GET("/ws/alerts", func(c *gin.Context) {
-		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			return
-		}
-		clientsMu.Lock()
-		clients[ws] = true
-		clientsMu.Unlock()
-
-		defer func() {
-			clientsMu.Lock()
-			delete(clients, ws)
-			clientsMu.Unlock()
-			ws.Close()
-		}()
-
-		for {
-			if _, _, err := ws.NextReader(); err != nil {
-				break
-			}
-		}
-	})
+	router.GET("/ws/alerts", gin.WrapF(wsHandler.Handler()))
 
 	// --- Iniciar servidor ---
 	log.Printf("API service listening on en :%s\n", apiPort)
