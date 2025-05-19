@@ -1,6 +1,6 @@
 module remote-patient-monitoring-system
 
-go 1.23.6
+go 1.23
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
