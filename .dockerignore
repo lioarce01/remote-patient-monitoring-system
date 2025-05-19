@@ -22,8 +22,6 @@ dist/
 
 # Módulos externos y caché
 vendor/
-*.mod
-*.sum
 
 # Archivos de entorno
 .env
