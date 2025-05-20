@@ -17,7 +17,7 @@ func (n *Normalizer) FromTelemetry(input TelemetryInput) *model.Observation {
 
 	return &model.Observation{
 		ResourceType:      "Observation",
-		Status:            "final",
+		Status:            "Final",
 		Code:              model.Code{Text: input.Type},
 		Subject:           model.Subject{Reference: input.PatientID},
 		EffectiveDateTime: input.Timestamp.Format(time.RFC3339),

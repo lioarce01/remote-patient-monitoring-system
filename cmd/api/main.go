@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	// --- Configuración ---
+	// --- environment configuration ---
 	conn := os.Getenv("POSTGRES_CONN")
 	influxAddr := os.Getenv("INFLUX_ADDR")
 	influxDB := os.Getenv("INFLUX_DB")
@@ -31,27 +31,27 @@ func main() {
 	apiPort := os.Getenv("API_PORT")
 	groupID := os.Getenv("GROUP_ID")
 
-	// --- Inicializar repositorios ---
+	// --- start repositories ---
 	metricRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
-		log.Fatal("Error al inicializar InfluxDB:", err)
+		log.Fatal("error starting InfluxDB:", err)
 	}
 
 	alertRepo, err := postgres.NewPostgresRepo(conn)
 	if err != nil {
-		log.Fatal("Error al inicializar Postgres:", err)
+		log.Fatal("error starting Postgres:", err)
 	}
 
-	// --- Inicializar servicios ---
+	// --- start services ---
 	querySvc := query.NewQueryService(metricRepo, alertRepo)
 
-	// --- Inicializar handlers ---
+	// --- start handlers ---
 	queryHandler := httpHandlers.NewQueryHandler(querySvc)
 
-	// --- Inicializar WebSocket ---
+	// --- start WebSocket ---
 	wsHandler := ws.NewWSHandler()
 
-	// --- Suscribirse al tópico de alertas ---
+	// --- subscribe to alerts topic ---
 	go func() {
 		consumer := kafka.NewKafkaConsumer(brokers, alertTopic, groupID)
 		consumer.Consume(context.Background(), func(key, value []byte) {
@@ -64,18 +64,18 @@ func main() {
 		})
 	}()
 
-	// --- Configurar router ---
+	// --- router config ---
 	router := gin.Default()
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	// Registrar rutas de handlers
+	// register handlers routes
 	api := router.Group("/")
 	queryHandler.RegisterRoutes(api)
 
-	// Endpoint WebSocket para recibir alertas en tiempo real
+	// websocket endpoint to receive alerts
 	router.GET("/ws/alerts", gin.WrapF(wsHandler.Handler()))
 
-	// --- Iniciar servidor ---
+	// --- start server ---
 	log.Printf("API service listening on en :%s\n", apiPort)
 	if err := router.Run(":" + apiPort); err != nil {
 		log.Fatal(err)

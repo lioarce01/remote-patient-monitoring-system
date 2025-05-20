@@ -16,20 +16,20 @@ func NewValidator() *Validator {
 }
 
 func (v *Validator) Validate(obs *model.Observation) error {
-	// Serializar obs directamente a JSON
+	// serialize obs directly to json
 	data, err := json.Marshal(obs)
 	if err != nil {
 		return fmt.Errorf("failed to marshal Observation: %w", err)
 	}
 
-	// Protegernos de cualquier panic interno
+	// protect of internal panics
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("FHIR validator panic: %v", r)
 		}
 	}()
 
-	// Validar usando el JSON bruto
+	// validate using brute json
 	var resource map[string]interface{}
 	if err := json.Unmarshal(data, &resource); err != nil {
 		return fmt.Errorf("failed to unmarshal Observation to map: %w", err)

@@ -32,13 +32,12 @@ func NewInfluxRepo(addr, db, user, pass string) (domain.ObservationRepository, e
 }
 
 func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) error {
-	// Asegúrate de que EffectiveDateTime es un time.Time
 	timestamp := record.EffectiveDateTime
 
-	// Crear el batch de puntos para InfluxDB
+	// create a batch for influxdb
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: r.db, Precision: "s"})
 
-	// Crear el punto para la observación
+	// create the point for the obs
 	pt, _ := client.NewPoint(
 		"vitals",
 		map[string]string{
@@ -55,7 +54,7 @@ func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) 
 
 	log.Printf("[InfluxRepo] Saving value: %f", record.Value)
 
-	// Escribir el punto en InfluxDB
+	// write the point into influxdb
 	return r.client.Write(bp)
 }
 
@@ -102,7 +101,7 @@ func (r *InfluxRepo) FetchObservations(ctx context.Context, patientID, from, to 
 						log.Printf("[FetchObservations] invalid timestamp number: %v", err)
 						continue
 					}
-					// Convertir nanosegundos Unix timestamp a time.Time
+					// convert nanoseconds unix to time.time
 					timestamp = time.Unix(0, n)
 				default:
 					log.Printf("[FetchObservations] unexpected timestamp type: %T", v)
@@ -133,7 +132,7 @@ func (r *InfluxRepo) FetchObservations(ctx context.Context, patientID, from, to 
 
 				obs := model.Observation{
 					ResourceType:      "Observation",
-					Status:            "final",
+					Status:            "Final",
 					Code:              model.Code{Text: "Vital Sign"},
 					Subject:           model.Subject{Reference: patientID},
 					EffectiveDateTime: timestamp.Format(time.RFC3339),

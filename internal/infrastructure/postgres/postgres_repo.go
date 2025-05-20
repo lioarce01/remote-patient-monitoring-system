@@ -20,7 +20,7 @@ func NewPostgresRepo(conn string) (*PostgresRepo, error) {
 		return nil, err
 	}
 
-	// Auto-migrar el esquema
+	// auto-migrate schema
 	if err := db.AutoMigrate(&model.Alert{}); err != nil {
 		return nil, err
 	}

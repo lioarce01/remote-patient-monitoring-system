@@ -33,26 +33,25 @@ func NewProcessService(publisher domain.Publisher, alertRepo domain.AlertReposit
 }
 
 func (svc *ProcessService) HandleObservation(ctx context.Context, obs *model.ObservationRecord) error {
-	// Chequear los umbrales y generar una alerta si es necesario
 	if alertType, triggered := rules.CheckThresholds(obs, svc.Thresholds); triggered {
-		log.Printf("Anomalía detectada: %s para paciente %s valor %f", alertType, obs.PatientID, obs.Value)
+		log.Printf("Anomaly detected: %s for patient %s value %f", alertType, obs.PatientID, obs.Value)
 
 		alert := model.Alert{
 			ID:            svc.generateID(),
 			PatientID:     obs.PatientID,
-			ObservationID: obs.ID, // Relacionamos la alerta con la observación
+			ObservationID: obs.ID,
 			Type:          alertType,
 			Message:       fmt.Sprintf("%s: value=%.2f at %s", alertType, obs.Value, obs.EffectiveDateTime),
 			Timestamp:     time.Now(),
 		}
 
-		// Publicar y guardar alerta
+		// publish and save alert
 		if err := svc.publishAndSaveAlert(ctx, &alert); err != nil {
 			return fmt.Errorf("failed to handle alert for patient %s: %v", alert.PatientID, err)
 		}
 	}
 
-	// detector de anomalias
+	// anomaly detector
 	if svc.ZDetector.Add(obs.Value) {
 		alert := model.Alert{
 			ID:            svc.generateID(),
@@ -63,16 +62,16 @@ func (svc *ProcessService) HandleObservation(ctx context.Context, obs *model.Obs
 			Timestamp:     time.Now(),
 		}
 
-		log.Printf("ZScore anomaly detected para paciente %s valor %f", obs.PatientID, obs.Value)
+		log.Printf("ZScore anomaly detected for patient %s value %f", obs.PatientID, obs.Value)
 
 		if err := svc.publishAndSaveAlert(ctx, &alert); err != nil {
 			return fmt.Errorf("failed to handle anomaly alert: %v", err)
 		} else {
-			log.Printf("Alerta anómala guardada y publicada con éxito para paciente %s", obs.PatientID)
+			log.Printf("Anomalous alert saved and published for patient %s", obs.PatientID)
 		}
 	}
 
-	// Guardar métricas agregadas
+	// save metrics
 	if err := svc.MetricsRepo.Save(ctx, obs); err != nil {
 		return fmt.Errorf("failed to store metrics for patient %s: %v", obs.PatientID, err)
 	}
@@ -81,14 +80,14 @@ func (svc *ProcessService) HandleObservation(ctx context.Context, obs *model.Obs
 }
 
 func (svc *ProcessService) publishAndSaveAlert(ctx context.Context, alert *model.Alert) error {
-	log.Printf("Publicando alerta tipo %s para paciente %s", alert.Type, alert.PatientID)
+	log.Printf("Publishing alert type %s for patient %s", alert.Type, alert.PatientID)
 	if err := svc.AlertPublisher.PublishAlert(ctx, alert); err != nil {
 		return fmt.Errorf("failed to publish alert: %v", err)
 	}
-	log.Printf("Alerta publicada, guardando en Postgres...")
+	log.Printf("Alert published, saving in Postgres...")
 	if err := svc.AlertRepo.Save(ctx, alert); err != nil {
 		return fmt.Errorf("failed to save alert: %v", err)
 	}
-	log.Printf("Alerta guardada en Postgres con id %s", alert.ID)
+	log.Printf("Alert published in postgres with id %s", alert.ID)
 	return nil
 }

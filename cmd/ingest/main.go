@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Leer config
+	// environment config
 	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 	topic := os.Getenv("OBS_TOPIC")
 	influxAddr := os.Getenv("INFLUX_ADDR")
@@ -27,23 +27,23 @@ func main() {
 		log.Printf("INGEST_PORT not set, defaulting to %s", ingestPort)
 	}
 
-	// InfluxDB repo
+	// initialize influxdb repo
 	obsRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
 		log.Fatalf("cannot initialize InfluxDB repo: %v", err)
 	}
 
-	// Después de NewKafkaPublisher
+	// initializing kafka publisher
 	pub := kafka.NewKafkaPublisher(brokers, topic)
 
-	// Crear servicio de ingestión y handler HTTP
+	// create of ingest service and HTTP handler
 	svc := ingest.NewIngestService(pub, obsRepo)
 	ingestHandler := httpHandlers.NewIngestHandler(svc)
 
-	// arrancar HTTP
+	// start HTTP server
 	router := gin.Default()
 
-	//registrar rutas y handlers
+	// register routes
 	ingestHandler.RegisterRoutes(router)
 
 	log.Printf("Ingest service listening on :%s", ingestPort)

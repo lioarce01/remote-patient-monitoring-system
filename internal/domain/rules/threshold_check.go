@@ -2,33 +2,33 @@ package rules
 
 import "remote-patient-monitoring-system/internal/domain/model"
 
-// Thresholds define los límites para disparar alertas.
+// Thresholds definen the limits to send alerts
 type Thresholds struct {
 	HeartRateMax float64 `json:"heart_rate_max"`
 	SpO2Min      float64 `json:"spo2_min"`
-	// Añade aquí más umbrales según necesites, p.ej. TemperatureMax, BloodPressureMax, etc.
+	// add more thresholds if needed
 }
 
-// CheckThresholds comprueba una observación y devuelve el tipo de alerta y un flag si se disparó.
+// CheckThresholds check an observation and send an alert
 func CheckThresholds(obs *model.ObservationRecord, th *Thresholds) (alertType string, triggered bool) {
 	switch obs.CodeText {
 	case "heart-rate":
-		// Si la frecuencia cardíaca supera el máximo definido
+		// if heart rate exceeds the maximum
 		if obs.Value > th.HeartRateMax {
 			return "HighHeartRate", true
 		}
 	case "spo2":
-		// Si la saturación de oxígeno baja del mínimo definido
+		// if the oxygen saturation is lower than the minimum allowed
 		if obs.Value < th.SpO2Min {
 			return "LowSpO2", true
 		}
-	// Ejemplo para temperatura corporal, si la añades:
+	// example for corporal temperature
 	// case "temperature":
 	//     if obs.Value > th.TemperatureMax {
 	//         return "HighTemperature", true
 	//     }
 	default:
-		// Si no hay regla para este tipo, no disparamos alerta
+		// if we dont have a rule, send false
 		return "", false
 	}
 

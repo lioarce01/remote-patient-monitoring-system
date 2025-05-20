@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	// --- Configuración desde entorno ---
+	// --- environment config ---
 	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 	obsTopic := os.Getenv("OBS_TOPIC")
 	alertTopic := os.Getenv("ALERT_TOPIC")
@@ -29,54 +29,54 @@ func main() {
 	influxPass := os.Getenv("INFLUX_PASS")
 	groupID := os.Getenv("GROUP_ID")
 
-	// --- Inicializar consumidor de Kafka ---
+	// --- initialize kafka consumer ---
 	consumer := kafka.NewKafkaConsumer(brokers, obsTopic, groupID)
 
-	// --- Inicializar repositorios ---
+	// --- initialize repositories ---
 	metricRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
-		log.Fatalf("Error al inicializar InfluxDB: %v", err)
+		log.Fatalf("error initializing influxdb: %v", err)
 	}
 
 	alertRepo, err := postgres.NewPostgresRepo(conn)
 	if err != nil {
-		log.Fatalf("Error al inicializar Postgres: %v", err)
+		log.Fatalf("error initializing postgres: %v", err)
 	}
 
-	// --- Inicializar publisher ---
+	// --- initialize publisher ---
 	publisher := kafka.NewKafkaPublisher(brokers, alertTopic)
 
-	// --- Inicializar servicio de procesamiento ---
+	// --- initialize process service ---
 	svc := process.NewProcessService(publisher, alertRepo, metricRepo)
 
-	// --- Configurar contexto para manejo de señales ---
+	// --- context configuration to handle signals ---
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	// --- Iniciar consumo de mensajes ---
+	// --- initialize message consumption ---
 	go func() {
 		consumer.Consume(ctx, func(key, msg []byte) {
 			var obs model.Observation
 			if err := json.Unmarshal(msg, &obs); err != nil {
-				log.Printf("Mensaje de observación inválido: %v", err)
+				log.Printf("observation message invalid: %v", err)
 				return
 			}
 
 			record, err := model.ToObservationRecord(&obs)
 			if err != nil {
-				log.Printf("Error al convertir a ObservationRecord: %v", err)
+				log.Printf("error converting to observationRecord: %v", err)
 				return
 			}
 
 			if err := svc.HandleObservation(ctx, record); err != nil {
-				log.Printf("Error al procesar observación %s: %v", obs.ID, err)
+				log.Printf("error processing observation %s: %v", obs.ID, err)
 			}
 		})
 	}()
 
-	// --- Esperar señal de terminación ---
+	// --- finisher signal ---
 	<-ctx.Done()
-	log.Println("Señal de terminación recibida, esperando finalización de procesos...")
+	log.Println("finisher signal received, waiting finalizing processes...")
 	time.Sleep(2 * time.Second)
-	log.Println("Servicio de procesamiento detenido")
+	log.Println("processing service stopped")
 }

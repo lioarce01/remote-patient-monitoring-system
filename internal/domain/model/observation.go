@@ -42,25 +42,24 @@ type ValueQuantity struct {
 }
 
 func ToObservationRecord(obs *Observation) (*ObservationRecord, error) {
-	// Validar si la observación es válida.
 	if obs == nil {
 		return nil, errors.New("observation is nil")
 	}
 
-	// Convertir EffectiveDateTime de string a time.Time.
+	// convert EffectiveDateTime string to time.time
 	effectiveDateTime, err := time.Parse(time.RFC3339, obs.EffectiveDateTime)
 	if err != nil {
 		return nil, err
 	}
 
-	// Crear y devolver el `ObservationRecord`.
+	// create and return `ObservationRecord`.
 	record := &ObservationRecord{
 		ID:                obs.ID,
 		ResourceType:      obs.ResourceType,
 		Status:            obs.Status,
-		CodeText:          obs.Code.Text,         // Mapear el texto del código
-		PatientID:         obs.Subject.Reference, // Usar la referencia del paciente
-		Subject:           obs.Subject.Reference, // Asumir que el Subject es una referencia
+		CodeText:          obs.Code.Text,
+		PatientID:         obs.Subject.Reference,
+		Subject:           obs.Subject.Reference,
 		EffectiveDateTime: effectiveDateTime,
 		Value:             obs.ValueQuantity.Value,
 		Unit:              obs.ValueQuantity.Unit,

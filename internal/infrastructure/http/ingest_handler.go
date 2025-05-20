@@ -18,7 +18,6 @@ func NewIngestHandler(svc *ingest.IngestService) *IngestHandler {
 
 func (h *IngestHandler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/observations", h.postObservation)
-	// opcional: r.GET("/metrics") ...
 }
 
 func (h *IngestHandler) postObservation(c *gin.Context) {
