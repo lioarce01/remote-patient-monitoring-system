@@ -1,9 +1,11 @@
 package http
 
 import (
+	"log"
 	"net/http"
 
 	"remote-patient-monitoring-system/internal/application/query"
+	"remote-patient-monitoring-system/internal/domain/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,16 +27,28 @@ func (h *QueryHandler) getObservations(c *gin.Context) {
 	id := c.Param("id")
 	from := c.Query("from")
 	to := c.Query("to")
+
 	data, err := h.Service.GetPatientObservations(c.Request.Context(), id, from, to)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	log.Printf("[getObservations] returning %d observations", len(data))
+	for i, obs := range data {
+		log.Printf("Observation %d: %+v", i, obs)
+	}
+
+	if len(data) == 0 {
+		data = []model.Observation{}
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
 func (h *QueryHandler) getAlerts(c *gin.Context) {
 	id := c.Param("id")
+
 	data, err := h.Service.GetPatientAlerts(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

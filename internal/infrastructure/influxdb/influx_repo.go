@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"remote-patient-monitoring-system/internal/domain"
@@ -59,11 +60,17 @@ func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) 
 }
 
 func (r *InfluxRepo) FetchObservations(ctx context.Context, patientID, from, to string) ([]model.Observation, error) {
-	q := client.NewQuery(
-		fmt.Sprintf(`SELECT * FROM vitals WHERE patientID='%s' AND time >= '%s' AND time <= '%s'`, patientID, from, to),
-		r.db, "ns")
+	query := fmt.Sprintf(`
+		SELECT * FROM vitals 
+		WHERE patientID = '%s' 
+		AND time >= '%s' 
+		AND time <= '%s'
+	`, patientID, from, to)
 
-	// Ejecutar la consulta
+	log.Printf("Generated InfluxQL query: %s", query)
+
+	q := client.NewQuery(query, r.db, "s")
+
 	resp, err := r.client.Query(q)
 	if err != nil {
 		return nil, fmt.Errorf("influx query failed: %w", err)
@@ -80,42 +87,59 @@ func (r *InfluxRepo) FetchObservations(ctx context.Context, patientID, from, to 
 					continue
 				}
 
-				timestampStr, ok := row[0].(string)
-				if !ok {
-					continue
-				}
-				timestamp, err := time.Parse(time.RFC3339, timestampStr)
-				if err != nil {
+				var timestamp time.Time
+				switch v := row[0].(type) {
+				case string:
+					t, err := time.Parse(time.RFC3339, v)
+					if err != nil {
+						log.Printf("[FetchObservations] invalid timestamp format: %v", err)
+						continue
+					}
+					timestamp = t
+				case json.Number:
+					n, err := v.Int64()
+					if err != nil {
+						log.Printf("[FetchObservations] invalid timestamp number: %v", err)
+						continue
+					}
+					// Convertir nanosegundos Unix timestamp a time.Time
+					timestamp = time.Unix(0, n)
+				default:
+					log.Printf("[FetchObservations] unexpected timestamp type: %T", v)
 					continue
 				}
 
-				valueFloat, ok := row[2].(float64)
+				unitStr, ok := row[2].(string)
 				if !ok {
+					log.Printf("[FetchObservations] expected unit as string, got: %T", row[2])
 					continue
 				}
 
-				unitStr, ok := row[3].(string)
-				if !ok {
+				var valueFloat float64
+				switch v := row[3].(type) {
+				case float64:
+					valueFloat = v
+				case json.Number:
+					f, err := v.Float64()
+					if err != nil {
+						log.Printf("[FetchObservations] failed to convert value json.Number to float64: %v", err)
+						continue
+					}
+					valueFloat = f
+				default:
+					log.Printf("[FetchObservations] unexpected type for value: %T", v)
 					continue
-				}
-
-				record := model.ObservationRecord{
-					PatientID:         patientID,
-					Value:             valueFloat,
-					Unit:              unitStr,
-					EffectiveDateTime: timestamp,
 				}
 
 				obs := model.Observation{
-					ID:                record.ID,
 					ResourceType:      "Observation",
 					Status:            "final",
 					Code:              model.Code{Text: "Vital Sign"},
-					Subject:           model.Subject{Reference: record.PatientID},
-					EffectiveDateTime: record.EffectiveDateTime.Format(time.RFC3339),
+					Subject:           model.Subject{Reference: patientID},
+					EffectiveDateTime: timestamp.Format(time.RFC3339),
 					ValueQuantity: model.ValueQuantity{
-						Value: record.Value,
-						Unit:  record.Unit,
+						Value: valueFloat,
+						Unit:  unitStr,
 					},
 				}
 
