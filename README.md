@@ -200,7 +200,7 @@ Messages will be sent in JSON format:
 ```json
 {
   "ID": "alert-1747693382984800835",
-  "PatientID": "Patient/Patient123",
+  "PatientID": "Patient123",
   "ObservationID": "obs-1747693381973770098",
   "Message": "Anomaly detected: value=127.00 at 2025-05-19 22:30:00 +0000 UTC",
   "Type": "Anomaly",
