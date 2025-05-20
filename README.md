@@ -38,7 +38,7 @@ This project implements a scalable RPM system that captures patient vital signs 
 
 ## Architecture
 
-1. **Ingest Service**: Receives raw patient observations via HTTP or gRPC and publishes messages to a Kafka topic.
+1. **Ingest Service**: Receives raw patient observations via HTTP and publishes messages to a Kafka topic.
 2. **Processing Service**: Consumes observations from Kafka, applies business rules, writes metrics to InfluxDB, stores generated alerts in PostgreSQL, and publishes alerts to a Kafka topic.
 3. **API Service**: Exposes REST endpoints to query historical observations and alerts, and a WebSocket endpoint for real-time alert streaming.
 
