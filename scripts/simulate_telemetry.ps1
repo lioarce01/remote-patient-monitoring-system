@@ -14,7 +14,7 @@ for ($i = 0; $i -lt 30; $i++) {
         $value = Get-Random -Minimum 65 -Maximum 85
     }
 
-    $timestamp = $baseTime.AddMinutes($i).ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
     $payload = @{
         patient_id = $PatientId
@@ -27,7 +27,7 @@ for ($i = 0; $i -lt 30; $i++) {
     Write-Host "Telemetria: $value bpm @ $timestamp"
 
     Invoke-RestMethod -Uri $Url -Method Post -Body $payload -ContentType "application/json"
-    Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 3
 }
 
 Write-Host "Telemetrias enviadas. Revisa los logs para ver las alertas."

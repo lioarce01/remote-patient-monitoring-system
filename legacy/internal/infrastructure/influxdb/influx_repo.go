@@ -12,7 +12,6 @@ import (
 	client "github.com/influxdata/influxdb1-client/v2"
 )
 
-// InfluxRepo is a repository for storing observations in InfluxDB.
 type InfluxRepo struct {
 	client client.Client
 	db     string
@@ -34,7 +33,6 @@ func NewInfluxRepo(addr, db, user, pass string) (domain.ObservationRepository, e
 func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) error {
 	timestamp := record.EffectiveDateTime
 
-	// Por ejemplo, si ObservationRecord tiene Value y Unit, y Type para la métrica
 	fields := map[string]interface{}{
 		record.CodeText: record.Value,
 	}
@@ -42,7 +40,7 @@ func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) 
 	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: r.db, Precision: "s"})
 	pt, _ := client.NewPoint(
 		"vitals",
-		map[string]string{"patientID": record.PatientID},
+		map[string]string{"patient_id": record.PatientID},
 		fields,
 		timestamp,
 	)
@@ -57,7 +55,7 @@ func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) 
 func (r *InfluxRepo) FetchObservations(ctx context.Context, patientID, from, to string) ([]model.Observation, error) {
 	query := fmt.Sprintf(`
 		SELECT * FROM vitals 
-		WHERE patientID = '%s' 
+		WHERE patient_id = '%s' 
 		AND time >= '%s' 
 		AND time <= '%s'
 	`, patientID, from, to)

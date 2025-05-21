@@ -29,12 +29,12 @@ func NewPostgresRepo(conn string) (*PostgresRepo, error) {
 }
 
 func (r *PostgresRepo) Save(ctx context.Context, alert *model.Alert) error {
-	log.Printf("[PostgresRepo] Intentando guardar alerta: %+v", alert)
+	log.Printf("[PostgresRepo] Trying to save alert: %+v", alert)
 	err := r.db.WithContext(ctx).Create(alert).Error
 	if err != nil {
-		log.Printf("[PostgresRepo] Error al guardar alerta: %v", err)
+		log.Printf("[PostgresRepo] Error saving alert: %v", err)
 	} else {
-		log.Printf("[PostgresRepo] Alerta guardada con éxito: %s", alert.ID)
+		log.Printf("[PostgresRepo] Alerta saved successfully: %s", alert.ID)
 	}
 	return err
 }

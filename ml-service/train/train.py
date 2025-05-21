@@ -1,16 +1,21 @@
-import pandas as pd
-from sklearn.ensemble import IsolationForest
-import joblib
-from influx_client import fetch_observations
+import sys
+import os
+import logging
 
-df = fetch_observations()
-df = df.dropna(subset=["heart_rate"])
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-model = IsolationForest(contamination=0.01, random_state=42)
-model.fit(df[["heart_rate"]])
+from app.services.training import train_model
 
-FEATURE_NAMES = ["heart_rate"]
+logging.basicConfig(level=logging.INFO)
 
-joblib.dump({"model": model, "features": FEATURE_NAMES}, "model/model.joblib")
+if len(sys.argv) < 2:
+    logging.error("❌ Usage: python train.py <patient_id>")
+    sys.exit(1)
 
-print("✅ Modelo entrenado y guardado.")
+patient_id = sys.argv[1]
+success, msg = train_model(patient_id)
+
+if success:
+    print(f"✅ {msg}")
+else:
+    print(f"❌ {msg}")

@@ -6,3 +6,4 @@ joblib
 kafka-python
 pydantic
 pandas
+apscheduler
