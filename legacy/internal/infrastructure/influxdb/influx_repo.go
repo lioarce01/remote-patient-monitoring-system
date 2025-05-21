@@ -34,27 +34,23 @@ func NewInfluxRepo(addr, db, user, pass string) (domain.ObservationRepository, e
 func (r *InfluxRepo) Save(ctx context.Context, record *model.ObservationRecord) error {
 	timestamp := record.EffectiveDateTime
 
-	// create a batch for influxdb
-	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: r.db, Precision: "s"})
+	// Por ejemplo, si ObservationRecord tiene Value y Unit, y Type para la métrica
+	fields := map[string]interface{}{
+		record.CodeText: record.Value,
+	}
 
-	// create the point for the obs
+	bp, _ := client.NewBatchPoints(client.BatchPointsConfig{Database: r.db, Precision: "s"})
 	pt, _ := client.NewPoint(
 		"vitals",
-		map[string]string{
-			"patientID": record.PatientID,
-			"type":      record.Unit,
-		},
-		map[string]interface{}{
-			"value": record.Value,
-		},
+		map[string]string{"patientID": record.PatientID},
+		fields,
 		timestamp,
 	)
 
 	bp.AddPoint(pt)
 
-	log.Printf("[InfluxRepo] Saving value: %f", record.Value)
+	log.Printf("[InfluxRepo] Saving metric: %s=%f", record.CodeText, record.Value)
 
-	// write the point into influxdb
 	return r.client.Write(bp)
 }
 

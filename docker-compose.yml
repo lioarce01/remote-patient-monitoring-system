@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build:
+      context: ./legacy
+      dockerfile: Dockerfile
     command: ["/app/bin/api"]
     ports:
       - "8080:8080"
@@ -25,7 +27,9 @@ services:
         condition: service_healthy
 
   ingest:
-    build: .
+    build:
+      context: ./legacy
+      dockerfile: Dockerfile
     command: ["/app/bin/ingest"]
     ports:
       - "8081:8081"
@@ -47,7 +51,9 @@ services:
         condition: service_healthy
 
   processing:
-    build: .
+    build:
+      context: ./legacy
+      dockerfile: Dockerfile
     command: ["/app/bin/processing"]
     env_file:
       - .env
@@ -68,7 +74,27 @@ services:
         condition: service_healthy
       db: 
         condition: service_healthy
-
+  ml-service:
+    build: ./ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - INFLUX_HOST=${INFLUX_HOST}
+      - INGEST_PORT=${INGEST_PORT}
+      - INFLUX_ADDR=${INFLUX_ADDR}
+      - INFLUX_DB=${INFLUX_DB}
+      - INFLUX_USER=${INFLUX_USER}
+      - INFLUX_PASS=${INFLUX_PASS}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health || exit 1"]
+      interval: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./ml_data:/app/app/model
   db:
     image: postgres:14
     environment:

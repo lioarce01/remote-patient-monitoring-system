@@ -14,6 +14,7 @@ import (
 	"remote-patient-monitoring-system/internal/domain/model"
 	"remote-patient-monitoring-system/internal/infrastructure/influxdb"
 	"remote-patient-monitoring-system/internal/infrastructure/kafka"
+	mlclient "remote-patient-monitoring-system/internal/infrastructure/ml-client"
 	"remote-patient-monitoring-system/internal/infrastructure/postgres"
 )
 
@@ -28,10 +29,10 @@ func main() {
 	influxUser := os.Getenv("INFLUX_USER")
 	influxPass := os.Getenv("INFLUX_PASS")
 	groupID := os.Getenv("GROUP_ID")
+	mlClient := mlclient.NewClient("http://ml-service:8000")
 
 	// --- initialize kafka consumer ---
 	consumer := kafka.NewKafkaConsumer(brokers, obsTopic, groupID)
-
 	// --- initialize repositories ---
 	metricRepo, err := influxdb.NewInfluxRepo(influxAddr, influxDB, influxUser, influxPass)
 	if err != nil {
@@ -47,7 +48,7 @@ func main() {
 	publisher := kafka.NewKafkaPublisher(brokers, alertTopic)
 
 	// --- initialize process service ---
-	svc := process.NewProcessService(publisher, alertRepo, metricRepo)
+	svc := process.NewProcessService(publisher, alertRepo, metricRepo, mlClient)
 
 	// --- context configuration to handle signals ---
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

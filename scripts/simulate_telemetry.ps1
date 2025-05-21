@@ -1,5 +1,5 @@
 $Url = "http://localhost:8081/observations"
-$PatientId = "Patient123"
+$PatientId = "patient-123"
 $Type = "heart_rate"
 $Unit = "bpm"
 

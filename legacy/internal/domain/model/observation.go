@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-	"log"
 	"time"
 )
 
@@ -45,14 +44,11 @@ func ToObservationRecord(obs *Observation) (*ObservationRecord, error) {
 	if obs == nil {
 		return nil, errors.New("observation is nil")
 	}
-
-	// convert EffectiveDateTime string to time.time
 	effectiveDateTime, err := time.Parse(time.RFC3339, obs.EffectiveDateTime)
 	if err != nil {
 		return nil, err
 	}
 
-	// create and return `ObservationRecord`.
 	record := &ObservationRecord{
 		ID:                obs.ID,
 		ResourceType:      obs.ResourceType,
@@ -64,8 +60,6 @@ func ToObservationRecord(obs *Observation) (*ObservationRecord, error) {
 		Value:             obs.ValueQuantity.Value,
 		Unit:              obs.ValueQuantity.Unit,
 	}
-
-	log.Printf("[ToObservationRecord] Value: %f", record.Value)
 
 	return record, nil
 }

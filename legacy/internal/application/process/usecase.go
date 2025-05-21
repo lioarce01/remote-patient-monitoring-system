@@ -7,6 +7,8 @@ import (
 	"remote-patient-monitoring-system/internal/domain"
 	"remote-patient-monitoring-system/internal/domain/model"
 	"remote-patient-monitoring-system/internal/domain/rules"
+	mlclient "remote-patient-monitoring-system/internal/infrastructure/ml-client"
+	"strings"
 	"time"
 )
 
@@ -16,62 +18,101 @@ type ProcessService struct {
 	MetricsRepo    domain.ObservationRepository // aggregated metrics (Postgres)
 	ZDetector      *rules.ZScoreDetector
 	Thresholds     *rules.Thresholds
+	MLClient       *mlclient.Client
 }
 
 func (svc *ProcessService) generateID() string {
 	return fmt.Sprintf("alert-%d", time.Now().UnixNano())
 }
 
-func NewProcessService(publisher domain.Publisher, alertRepo domain.AlertRepository, metricsRepo domain.ObservationRepository) *ProcessService {
+func NewProcessService(publisher domain.Publisher, alertRepo domain.AlertRepository, metricsRepo domain.ObservationRepository, mlClient *mlclient.Client) *ProcessService {
 	return &ProcessService{
 		AlertPublisher: publisher,
 		AlertRepo:      alertRepo,
 		MetricsRepo:    metricsRepo,
 		ZDetector:      rules.NewZScoreDetector(30, 3.0, 0.1),
 		Thresholds:     &rules.Thresholds{HeartRateMax: 100, SpO2Min: 90},
+		MLClient:       mlClient,
 	}
 }
 
 func (svc *ProcessService) HandleObservation(ctx context.Context, obs *model.ObservationRecord) error {
-	if alertType, triggered := rules.CheckThresholds(obs, svc.Thresholds); triggered {
-		log.Printf("Anomaly detected: %s for patient %s value %f", alertType, obs.PatientID, obs.Value)
+	// 1. Check thresholds
+	alertTypes, triggered := rules.CheckThresholds(obs, svc.Thresholds)
+	if triggered {
+		alertTypeStr := strings.Join(alertTypes, ", ")
 
 		alert := model.Alert{
 			ID:            svc.generateID(),
 			PatientID:     obs.PatientID,
 			ObservationID: obs.ID,
-			Type:          alertType,
-			Message:       fmt.Sprintf("%s: value=%.2f at %s", alertType, obs.Value, obs.EffectiveDateTime),
+			Type:          alertTypeStr,
+			Message:       fmt.Sprintf("Alerts: %s at %s", alertTypeStr, obs.EffectiveDateTime),
 			Timestamp:     time.Now(),
 		}
-
-		// publish and save alert
 		if err := svc.publishAndSaveAlert(ctx, &alert); err != nil {
-			return fmt.Errorf("failed to handle alert for patient %s: %v", alert.PatientID, err)
+			return fmt.Errorf("failed to handle threshold alert for patient %s: %v", alert.PatientID, err)
 		}
 	}
 
-	// anomaly detector
-	if svc.ZDetector.Add(obs.Value) {
+	// 2. Z-Score detection
+	zAnomaly := svc.ZDetector.Add(obs.Value)
+
+	var (
+		mlAnomaly bool
+		mlScore   float64
+	)
+
+	if svc.MLClient != nil {
+		mlObs := mlclient.MLObservation{
+			ID:                obs.ID,
+			PatientID:         obs.PatientID,
+			HeartRate:         obs.Value,
+			RespRate:          0,
+			Spo2:              0,
+			EffectiveDateTime: obs.EffectiveDateTime.Format(time.RFC3339),
+		}
+
+		resp, err := svc.MLClient.Predict(mlObs)
+		if err != nil {
+			log.Printf("ML service error for obs %s: %v", obs.ID, err)
+		} else if resp.Prediction {
+			mlAnomaly = true
+			mlScore = resp.AnomalyScore
+		}
+	}
+
+	// 4. Alert if any anomaly is detected
+	if zAnomaly || mlAnomaly {
+		source := "Z-Score"
+		if zAnomaly && mlAnomaly {
+			source = "Z-Score and ML"
+		} else if mlAnomaly {
+			source = "ML"
+		}
+
+		message := fmt.Sprintf("Anomaly detected by %s: value=%.2f at %s", source, obs.Value, obs.EffectiveDateTime)
+		if mlAnomaly {
+			message += fmt.Sprintf(", ML anomaly score %.2f", mlScore)
+		}
+
 		alert := model.Alert{
 			ID:            svc.generateID(),
 			PatientID:     obs.PatientID,
 			ObservationID: obs.ID,
 			Type:          "Anomaly",
-			Message:       fmt.Sprintf("Anomaly detected: value=%.2f at %s", obs.Value, obs.EffectiveDateTime),
+			Message:       message,
 			Timestamp:     time.Now(),
 		}
 
-		log.Printf("ZScore anomaly detected for patient %s value %f", obs.PatientID, obs.Value)
+		log.Printf("Anomaly alert for patient %s detected by %s", obs.PatientID, source)
 
 		if err := svc.publishAndSaveAlert(ctx, &alert); err != nil {
 			return fmt.Errorf("failed to handle anomaly alert: %v", err)
-		} else {
-			log.Printf("Anomalous alert saved and published for patient %s", obs.PatientID)
 		}
 	}
 
-	// save metrics
+	// 5. Save metrics
 	if err := svc.MetricsRepo.Save(ctx, obs); err != nil {
 		return fmt.Errorf("failed to store metrics for patient %s: %v", obs.PatientID, err)
 	}
