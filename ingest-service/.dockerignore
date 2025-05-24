@@ -1,0 +1,33 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Go build cache
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Binarios locales
+bin/
+build/
+dist/
+
+# Editor configs
+.idea/
+.vscode/
+
+# Módulos externos y caché
+vendor/
+
+# Archivos de entorno
+.env
+*.env
+.env.*
+
+# Git
+.git
+.gitignore

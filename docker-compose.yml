@@ -28,9 +28,9 @@ services:
 
   ingest:
     build:
-      context: ./legacy
+      context: ./ingest-service
       dockerfile: Dockerfile
-    command: ["/app/bin/ingest"]
+    command: ["/app/bin"]
     ports:
       - "8081:8081"
     env_file:
