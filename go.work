@@ -1,7 +1,8 @@
 go 1.23.6
 
 use (
+	./api-service
 	./ingest-service
 	./pkg/common
-	./api-service
+	./processing-service
 )
