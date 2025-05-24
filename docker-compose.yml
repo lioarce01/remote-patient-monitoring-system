@@ -1,9 +1,9 @@
 services:
   api:
     build:
-      context: ./legacy
+      context: ./api-service
       dockerfile: Dockerfile
-    command: ["/app/bin/api"]
+    command: ["/app/bin"]
     ports:
       - "8080:8080"
     env_file:
@@ -52,9 +52,9 @@ services:
 
   processing:
     build:
-      context: ./legacy
+      context: ./processing-service
       dockerfile: Dockerfile
-    command: ["/app/bin/processing"]
+    command: ["/app/bin"]
     env_file:
       - .env
     environment:
