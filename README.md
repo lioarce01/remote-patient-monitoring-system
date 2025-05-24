@@ -20,6 +20,7 @@ A real-time Remote Patient Monitoring (RPM) system designed to collect, process,
   * [Ingest Service](#ingest-service)
   * [Processing Service](#processing-service)
   * [API Service](#api-service)
+  * [Machine Learning Service](#machine-learning-service)
 * [Environment Configuration](#environment-configuration)
 
   * [Shared Variables](#shared-variables)
@@ -39,8 +40,9 @@ This project implements a scalable RPM system that captures patient vital signs 
 ## Architecture
 
 1. **Ingest Service**: Receives raw patient observations via HTTP and publishes messages to a Kafka topic.
-2. **Processing Service**: Consumes observations from Kafka, applies business rules, writes metrics to InfluxDB, stores generated alerts in PostgreSQL, and publishes alerts to a Kafka topic.
+2. **Processing Service**: Consumes observations from Kafka, applies business rules, writes metrics to InfluxDB, stores generated alerts in PostgreSQL, and publishes alerts to a Kafka topic. Integrates with the Machine Learning service and Z-Score detector to predict anomalies.
 3. **API Service**: Exposes REST endpoints to query historical observations and alerts, and a WebSocket endpoint for real-time alert streaming.
+4. **Machine Learning Service**: Uses Isolation Forest models (via scikit-learn) to predict anomalies in telemetry data. Maintains a personalized model per patient, retrains models daily with recent data, and exposes HTTP endpoints for manual retraining.
 
 ## Tech Stack
 
@@ -53,6 +55,7 @@ This project implements a scalable RPM system that captures patient vital signs 
   * PostgreSQL (relational data)
 * **Message Broker**: Apache Kafka
 * **ORM**: [GORM](https://gorm.io/)
+* **Machine Learning**: Python, `scikit-learn` Isolation Forest
 * **Monitoring**: Prometheus
 * **Deployment**: Docker & Docker Compose
 
@@ -142,6 +145,13 @@ remote-patient-monitoring-system/
 * WebSocket endpoint:
 
   * `ws://localhost:${API_PORT}/ws/alerts` for real-time alert streaming
+
+### Machine Learning Service
+* Implements anomaly detection using scikit-learn Isolation Forest models.
+* Each patient has a personalized ML model trained on their historical telemetry data.
+* Runs a daily cron job to retrain models for all patients using the latest data.
+* Exposes HTTP endpoints to trigger retraining of all models on demand.
+* Collaborates with the Processing Service to provide anomaly predictions alongside the Z-Score statistical detector.
 
 ## Environment Configuration
 
