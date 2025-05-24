@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -44,6 +45,11 @@ func main() {
 
 	// register routes
 	ingestHandler.RegisterRoutes(router)
+
+	// healthcheck
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 
 	log.Printf("Ingest service listening on: %s", ingestPort)
 	if err := router.Run(":" + ingestPort); err != nil {

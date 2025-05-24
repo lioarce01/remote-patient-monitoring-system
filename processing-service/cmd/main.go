@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
 	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/db"
 	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/kafka"
@@ -71,6 +73,15 @@ func main() {
 				log.Printf("error processing observation %s: %v", obs.ID, err)
 			}
 		})
+	}()
+
+	// healthcheck
+	go func() {
+		r := gin.Default()
+		r.GET("/health", func(c *gin.Context) {
+			c.String(http.StatusOK, "OK")
+		})
+		r.Run(":9090")
 	}()
 
 	// signal finisher

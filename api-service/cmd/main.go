@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -70,6 +71,11 @@ func main() {
 
 	// websocket endpoint
 	router.GET("/ws/alerts", gin.WrapF(wsHandler.Handler()))
+
+	// healthcheck
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 
 	// initialize server
 	log.Printf("API service listening on :%s\n", apiPort)

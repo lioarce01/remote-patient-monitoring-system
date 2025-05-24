@@ -3,7 +3,7 @@ services:
     build:
       context: ./api-service
       dockerfile: Dockerfile
-    command: ["/app/bin"]
+    command: ["/app/bin/api-service-binary"]
     ports:
       - "8080:8080"
     env_file:
@@ -30,7 +30,7 @@ services:
     build:
       context: ./ingest-service
       dockerfile: Dockerfile
-    command: ["/app/bin"]
+    command: ["/app/bin/ingest-service-binary"]
     ports:
       - "8081:8081"
     env_file:
@@ -54,7 +54,7 @@ services:
     build:
       context: ./processing-service
       dockerfile: Dockerfile
-    command: ["/app/bin"]
+    command: ["/app/bin/processing-service-binary"]
     env_file:
       - .env
     environment:
