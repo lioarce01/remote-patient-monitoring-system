@@ -38,6 +38,12 @@ def get_model_info():
         "status": "loaded" if model_exists else "not loaded"
     }
 
+@router.get("/health")
+def healthcheck():
+    return {
+        "status": "Service healthy"
+    }
+
 @router.post("/predict")
 def predict(obs: Observation):
     vitals = {"heart_rate": obs.heart_rate}
