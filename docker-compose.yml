@@ -1,7 +1,9 @@
 services:
   api:
-    build: .
-    command: ["/app/bin/api"]
+    build:
+      context: .
+      dockerfile: api-service/Dockerfile
+    command: ["/app/bin/api-service-binary"]
     ports:
       - "8080:8080"
     env_file:
@@ -23,10 +25,18 @@ services:
         condition: service_healthy
       db: 
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   ingest:
-    build: .
-    command: ["/app/bin/ingest"]
+    build:
+      context: .
+      dockerfile: ingest-service/Dockerfile
+    command: ["/app/bin/ingest-service-binary"]
     ports:
       - "8081:8081"
     env_file:
@@ -45,10 +55,18 @@ services:
         condition: service_healthy
       influxdb:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   processing:
-    build: .
-    command: ["/app/bin/processing"]
+    build:
+      context: .
+      dockerfile: processing-service/Dockerfile
+    command: ["/app/bin/processing-service-binary"]
     env_file:
       - .env
     environment:
@@ -68,7 +86,35 @@ services:
         condition: service_healthy
       db: 
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
+  ml-service:
+    build: ./ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - INFLUX_HOST=${INFLUX_HOST}
+      - INGEST_PORT=${INGEST_PORT}
+      - INFLUX_ADDR=${INFLUX_ADDR}
+      - INFLUX_DB=${INFLUX_DB}
+      - INFLUX_USER=${INFLUX_USER}
+      - INFLUX_PASS=${INFLUX_PASS}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health || exit 1"]
+      interval: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./ml_data:/app/app/model
+      
   db:
     image: postgres:14
     environment:

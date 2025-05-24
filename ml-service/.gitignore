@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Entornos virtuales
+.env/
+.venv/
+venv/
+env/
+
+# Archivos de logs o outputs
+*.log
+*.out
+
+# Modelos y artefactos de entrenamiento
+model/
+*.joblib
+*.pkl
+*.h5
+
+# Archivos de configuración secretos o locales
+.env
+*.env
+
+# Otros
+.DS_Store
+.ipynb_checkpoints/

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+influxdb
+scikit-learn
+joblib
+kafka-python
+pydantic
+pandas
+apscheduler
