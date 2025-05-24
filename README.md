@@ -1,3 +1,6 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lioarce01/remote-patient-monitoring-system)
+![CI](https://github.com/lioarce01/remote-patient-monitoring-system/actions/workflows/ci.yml/badge.svg)
+
 # Remote Patient Monitoring System
 
 A real-time Remote Patient Monitoring (RPM) system designed to collect, process, and visualize patient telemetry data. Built with Go, Kafka, InfluxDB, PostgreSQL, Prometheus, and WebSockets, and deployed via Docker Compose.
