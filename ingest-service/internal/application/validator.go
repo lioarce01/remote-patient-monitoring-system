@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
 	v1 "github.com/robertoAraneda/go-fhir-validator/pkg/v1"
 )
 

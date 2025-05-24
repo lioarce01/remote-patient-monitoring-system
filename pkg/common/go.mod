@@ -1,4 +1,4 @@
-module github.com/lioarce01/remote_patient_monitoring_system/pkg/common
+module github.com/lioarce01/remote-patient-monitoring-system/pkg/common
 
 go 1.23.0
 
@@ -11,7 +11,7 @@ require (
 	gorm.io/gorm v1.26.1
 )
 
-replace github.com/lioarce01/remote_patient_monitoring_system/pkg/common => ./
+// replace github.com/lioarce01/remote_patient_monitoring_system/pkg/common => ./
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -20,13 +20,15 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 )
 
 require (
-	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lib/pq v1.10.9
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	gorm.io/driver/postgres v1.5.11

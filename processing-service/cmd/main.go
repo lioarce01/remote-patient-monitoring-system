@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/db"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/kafka"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/mlclient"
-	"github.com/lioarce01/remote_patient_monitoring_system/processing-service/internal/application"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/db"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/kafka"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/mlclient"
+	"github.com/lioarce01/remote-patient-monitoring-system/processing-service/internal/application"
 )
 
 func main() {

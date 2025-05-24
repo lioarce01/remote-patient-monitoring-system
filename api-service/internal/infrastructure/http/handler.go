@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
-	"github.com/lioarce01/rempote_patient_monitoring_system/api-service/internal/application"
+	"github.com/lioarce01/remote-patient-monitoring-system/api-service/internal/application"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
 )
 
 type QueryHandler struct {

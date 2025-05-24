@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/repository"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/repository"
 )
 
 type QueryService struct {

@@ -1,4 +1,6 @@
-go 1.23.6
+go 1.23.0
+
+toolchain go1.23.6
 
 use (
 	./api-service
@@ -6,3 +8,5 @@ use (
 	./pkg/common
 	./processing-service
 )
+
+// replace github.com/lioarce01/remote_patient_monitoring_system/pkg/common => ./pkg/common

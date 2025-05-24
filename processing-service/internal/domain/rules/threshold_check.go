@@ -1,6 +1,6 @@
 package rules
 
-import "github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
+import "github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
 
 // Thresholds definen the limits to send alerts
 type Thresholds struct {

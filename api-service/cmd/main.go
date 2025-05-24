@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/db"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/kafka"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/ws"
-	"github.com/lioarce01/rempote_patient_monitoring_system/api-service/internal/application"
-	httpHandler "github.com/lioarce01/rempote_patient_monitoring_system/api-service/internal/infrastructure/http"
+	"github.com/lioarce01/remote-patient-monitoring-system/api-service/internal/application"
+	httpHandler "github.com/lioarce01/remote-patient-monitoring-system/api-service/internal/infrastructure/http"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/db"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/kafka"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

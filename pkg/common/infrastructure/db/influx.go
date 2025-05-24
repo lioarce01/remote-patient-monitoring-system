@@ -8,8 +8,8 @@ import (
 	"time"
 
 	client "github.com/influxdata/influxdb1-client/v2"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/repository"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/repository"
 )
 
 type InfluxRepo struct {

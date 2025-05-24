@@ -1,8 +1,8 @@
 services:
   api:
     build:
-      context: ./api-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-service/Dockerfile
     command: ["/app/bin/api-service-binary"]
     ports:
       - "8080:8080"
@@ -26,16 +26,16 @@ services:
       db: 
         condition: service_healthy
     healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-    interval: 10s
-    timeout: 5s
-    retries: 3
-    start_period: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   ingest:
     build:
-      context: ./ingest-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ingest-service/Dockerfile
     command: ["/app/bin/ingest-service-binary"]
     ports:
       - "8081:8081"
@@ -56,16 +56,16 @@ services:
       influxdb:
         condition: service_healthy
     healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
-    interval: 10s
-    timeout: 5s
-    retries: 3
-    start_period: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   processing:
     build:
-      context: ./processing-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: processing-service/Dockerfile
     command: ["/app/bin/processing-service-binary"]
     env_file:
       - .env
@@ -87,11 +87,11 @@ services:
       db: 
         condition: service_healthy
     healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
-    interval: 10s
-    timeout: 5s
-    retries: 3
-    start_period: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   ml-service:
     build: ./ml-service

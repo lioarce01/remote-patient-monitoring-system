@@ -6,12 +6,12 @@ import (
 	"os"
 	"strings"
 
-	httpHandler "github.com/lioarce01/remote_patient_monitoring_system/ingest-service/internal/infrastructure/http"
+	httpHandler "github.com/lioarce01/remote-patient-monitoring-system/ingest-service/internal/infrastructure/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lioarce01/remote_patient_monitoring_system/ingest-service/internal/application"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/db"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/infrastructure/kafka"
+	"github.com/lioarce01/remote-patient-monitoring-system/ingest-service/internal/application"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/db"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/infrastructure/kafka"
 )
 
 func main() {

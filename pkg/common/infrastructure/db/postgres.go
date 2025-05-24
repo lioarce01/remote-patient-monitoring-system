@@ -5,7 +5,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/lioarce01/remote_patient_monitoring_system/pkg/common/domain/entities"
+	"github.com/lioarce01/remote-patient-monitoring-system/pkg/common/domain/entities"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
