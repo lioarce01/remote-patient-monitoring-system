@@ -17,15 +17,15 @@ def fetch_observations(patient_id: str) -> pd.DataFrame:
         points = list(result.get_points())
 
         if not points:
-            logger.warning(f"⚠️ No observations found for patient_id {patient_id}")
+            logger.warning(f"No observations found for patient_id {patient_id}")
             return pd.DataFrame()
 
         df = pd.DataFrame(points)
-        logger.info(f"✅ Retrieved {len(df)} observations for patient_id {patient_id}")
+        logger.info(f"Retrieved {len(df)} observations for patient_id {patient_id}")
         return df
 
     except Exception as e:
-        logger.error(f"🚨 Error fetching observations for patient {patient_id}: {e}")
+        logger.error(f"Error fetching observations for patient {patient_id}: {e}")
         return pd.DataFrame()
 
 def fetch_all_patient_ids() -> list[str]:
@@ -36,5 +36,5 @@ def fetch_all_patient_ids() -> list[str]:
         values = list(result.get_points())
         return [v["value"] for v in values]
     except Exception as e:
-        logger.error(f"🚨 Failed to fetch patient IDs: {e}")
+        logger.error(f"Failed to fetch patient IDs: {e}")
         return []

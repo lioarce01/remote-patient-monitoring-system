@@ -9,7 +9,7 @@ from app.services.training import train_model
 logging.basicConfig(level=logging.INFO)
 
 if len(sys.argv) < 2:
-    logging.error("❌ Usage: python train.py <patient_id>")
+    logging.error("Usage: python train.py <patient_id>")
     sys.exit(1)
 
 patient_id = sys.argv[1]

@@ -12,15 +12,15 @@ def predict(patient_id: str, vitals: dict[str, float]) -> tuple[bool, float]:
     model_path = os.path.join(MODEL_DIR, f"{patient_id}_model.joblib")
 
     try:
-        logging.info(f"🔍 Loading model for patient: {patient_id} at {model_path}")
+        logging.info(f"Loading model for patient: {patient_id} at {model_path}")
         data = joblib.load(model_path)
         model = data["model"]
         features = data["features"]
     except FileNotFoundError:
-        logging.error(f"❌ Model not found for patient {patient_id}")
+        logging.error(f"Model not found for patient {patient_id}")
         raise FileNotFoundError(f"Model not found for patient {patient_id}")
     except Exception as e:
-        logging.error(f"🚨 Error loading model for patient {patient_id}: {e}")
+        logging.error(f"Error loading model for patient {patient_id}: {e}")
         raise RuntimeError(f"Failed to load model for patient {patient_id}")
 
     x = np.array([[vitals[feature] for feature in features]])
