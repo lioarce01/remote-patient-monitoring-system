@@ -3,4 +3,5 @@ go 1.23.6
 use (
 	./ingest-service
 	./pkg/common
+	./api-service
 )
